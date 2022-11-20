@@ -76,6 +76,22 @@ t_IS_EQUAL = r'=='
 t_NOT_EQUAL = r'<>'
 
 
+ARITHMETIC_OPERATORS = [TokenType.MINUS, TokenType.PLUS, TokenType.TIMES, TokenType.DIVIDE, TokenType.POW]
+
+COMPARISON_OPERATORS = [
+    TokenType.LESS_THAN,
+    TokenType.LESS_EQUAL,
+    TokenType.GREATER_EQUAL,
+    TokenType.GREATER_THAN,
+    TokenType.IS_EQUAL,
+    TokenType.NOT_EQUAL,
+]
+
+BOOL_CONDITION_OPERATORS = [
+    TokenType.AND,
+    TokenType.OR
+]
+
 # A regular expression rule with some action code
 def t_NUMBER(t):
     r'(-)?[0-9]+(\.[0-9]+)?'

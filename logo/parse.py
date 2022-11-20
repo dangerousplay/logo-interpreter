@@ -3,8 +3,7 @@ import itertools
 
 import ply.yacc as yacc
 
-from .lexer import TokenType, lexer, tokens
-
+from .lexer import TokenType, lexer, tokens, ARITHMETIC_OPERATORS, BOOL_CONDITION_OPERATORS
 
 BinaryOperation = collections.namedtuple('BinaryOperation', 'op left right')
 
@@ -103,17 +102,23 @@ def p_declare_func_arg(p):
 
 
 def p_if(p):
-    """if : IF bool_expression THEN statement_list END"""
+    """if : IF expression THEN statement_list END"""
+    _assert_bool_expression_(p[2])
+
     p[0] = IfStatement(p[2], p[4], else_body=None)
 
 
 def p_if_else(p):
-    """if : IF bool_expression THEN statement_list ELSE statement_list END"""
+    """if : IF expression THEN statement_list ELSE statement_list END"""
+    _assert_bool_expression_(p[2])
+
     p[0] = IfStatement(p[2], p[4], p[6])
 
 
 def p_while(p):
-    """while : WHILE bool_expression statement_list END"""
+    """while : WHILE expression statement_list END"""
+    _assert_bool_expression_(p[2])
+
     p[0] = WhileStatement(p[2], p[3])
 
 
@@ -122,40 +127,28 @@ def p_assignment(p):
     p[0] = Assignment(p[2], p[4])
 
 
-def p_expression(p):
-    '''expression : bool_expression
-                  | math_expression
-    '''
-    p[0] = p[1]
-
-
-def p_bool_expression_and(p):
-    'bool_expression : bool_expression AND bool_expression'
+def p_expression_and(p):
+    'expression : expression AND expression'
     p[0] = BinaryOperation(TokenType.AND, p[1], p[3])
 
 
 def p_bool_expression_or(p):
-    'bool_expression : bool_expression OR bool_expression'
+    'expression : expression OR expression'
     p[0] = BinaryOperation(TokenType.OR, p[1], p[3])
 
 
 def p_bool_expression(p):
-    'bool_expression : bool_expression_not'
+    'expression : expression_not'
     p[0] = p[1]
 
 
-def p_bool_expression_p(p):
-    'bool_expression_eq : LPAREN bool_expression RPAREN'
-    p[0] = p[2]
-
-
 def p_bool_expression_not(p):
-    'bool_expression_not : NOT bool_expression_eq'
+    'expression_not : NOT bool_expression_eq'
     p[0] = NotOperation(p[2])
 
 
 def p_bool_expression_not_e(p):
-    'bool_expression_not : bool_expression_eq'
+    'expression_not : bool_expression_eq'
     p[0] = p[1]
 
 
@@ -187,6 +180,16 @@ def p_bool_expression_eq(p):
 def p_bool_expression_neq(p):
     'bool_expression_eq : math_expression NOT_EQUAL math_expression'
     p[0] = BinaryOperation(TokenType.NOT_EQUAL, p[1], p[3])
+
+
+def p_bool_expression_m(p):
+    'bool_expression_eq : math_expression'
+    p[0] = p[1]
+
+
+def p_expression_p(p):
+    'bool_expression_eq : LPAREN expression RPAREN'
+    p[0] = p[2]
 
 
 def p_math_expression_plus(p):
@@ -249,9 +252,34 @@ def p_factor_expr(p):
     p[0] = p[2]
 
 
+def _assert_bool_expression_(p):
+    if isinstance(p, Identifier):
+        return
+    elif isinstance(p, BinaryOperation):
+        _assert_bool_condition_(p)
+    elif isinstance(p, NotOperation):
+        _assert_bool_condition_(p.expression)
+    else:
+        raise Exception(f"Unexpected token for boolean expression: {p}")
+
+
+def _assert_bool_condition_(p: BinaryOperation):
+    if p.op in ARITHMETIC_OPERATORS:
+        raise Exception(f"Unexpected math operator in bool expression: Line {p}")
+
+    if p.op in BOOL_CONDITION_OPERATORS:
+        _assert_bool_expression_(p.left)
+        _assert_bool_expression_(p.right)
+
+
 # Error rule for syntax errors
-def p_error(p):
-    print("Syntax error in input!")
+def p_error(token):
+    if token:
+        raise Exception(
+            f"Unexpected token:{token.lineno}: {token.type}:'{token.value}'"
+        )
+
+    raise Exception("Syntax error at EOF.")
 
 
 parser = yacc.yacc()

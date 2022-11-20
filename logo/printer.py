@@ -23,13 +23,13 @@ def print_binary_operation(bop: BinaryOperation, buffer: StringIO):
 
 def print_not_op(op: NotOperation, buffer: StringIO):
     buffer.write(f"NOT (")
-    print_binary_operation(op.expression, buffer)
+    print_bool_expression(op.expression, buffer)
     buffer.write(") ")
 
 
 def print_if_statement(if_statement: IfStatement, buffer: StringIO):
     buffer.write("IF ")
-    print_binary_operation(if_statement.condition, buffer)
+    print_bool_expression(if_statement.condition, buffer)
     buffer.write("THEN \n")
 
     for op in if_statement.body or []:
@@ -61,7 +61,7 @@ def print_assignment(op: Assignment, buffer: StringIO):
 
 def print_while_statement(statement: WhileStatement, buffer: StringIO):
     buffer.write("WHILE ")
-    print_binary_operation(statement.condition, buffer)
+    print_bool_expression(statement.condition, buffer)
 
     for op in statement.body or []:
         print_statement(op, buffer)
@@ -105,6 +105,18 @@ def print_statement(op, buffer: StringIO):
         print_declare_function(op, buffer)
     elif isinstance(op, InvokeFunction):
         print_invoke_function(op, buffer)
+
+
+def print_bool_expression(op, buffer: StringIO):
+    if isinstance(op, Identifier):
+        buffer.write(f"{op.value} ")
+    elif isinstance(op, NotOperation):
+        print_not_op(op, buffer)
+    elif isinstance(op, BinaryOperation):
+        print_binary_operation(op, buffer)
+    else:
+        buffer.write(f"{op} ")
+
 
 
 def print_program(ast: List[Any]) -> str:
