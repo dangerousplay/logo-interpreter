@@ -166,6 +166,47 @@ class SemanticTestSpec(unittest.TestCase):
         with self.assertRaises(Exception):
             analyzer.visit(expression)
 
+    @unpack
+    @data(
+        {'expression': [
+            Assignment('y', Identifier('RANDOM')),
+            Assignment('x', Identifier('HEADING')),
+            Assignment('z', Identifier('YCOR')),
+            Assignment('w', Identifier('XCOR')),
+        ]},
+        {'expression': [
+            InvokeFunction('LT', [10]),
+            InvokeFunction('LEFT', [10]),
+            InvokeFunction('RT', [10]),
+            InvokeFunction('RIGHT', [10]),
+            InvokeFunction('HOME', None),
+            InvokeFunction('WIPECLEAN', None),
+            InvokeFunction('WC', None),
+            InvokeFunction('CLEARSCREEN', None),
+            InvokeFunction('CS', None),
+        ]},
+    )
+    def test_built_in(self, expression):
+        expression = DeclareFunction('main', None, expression)
+
+        analyzer = SemanticAnalyzer()
+        analyzer.visit(expression)
+
+    @unpack
+    @data(
+        {'expression': [InvokeFunction('LT', None)]},
+        {'expression': [InvokeFunction('RT', None)]},
+        {'expression': [InvokeFunction('RTS', None)]},
+        {'expression': [InvokeFunction('HOME', ['x'])]},
+    )
+    def test_invalid_invoke(self, expression):
+        expression = DeclareFunction('main', None, expression)
+
+        analyzer = SemanticAnalyzer()
+
+        with self.assertRaises(Exception):
+            analyzer.visit(expression)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -28,9 +28,50 @@ class FunctionSymbol(Symbol):
         self.params = params if params is not None else []
 
 
+def built_in():
+    forward = FunctionSymbol("FORWARD", params=["num"])
+    backward = FunctionSymbol("BACKWARD", params=["num"])
+
+    right = FunctionSymbol("RIGHT", params=["angle"])
+    left = FunctionSymbol("LEFT", params=["angle"])
+
+    pen_up = FunctionSymbol("PENUP")
+    pen_down = FunctionSymbol("PENDOWN")
+
+    wipe_clean = FunctionSymbol("WIPECLEAN")
+    clear_screen = FunctionSymbol("CLEARSCREEN")
+
+    return {
+        "RANDOM": VariableSymbol("RANDOM"),
+        "HEADING": VariableSymbol("HEADING"),
+        "YCOR": VariableSymbol("YCOR"),
+        "XCOR": VariableSymbol("XCOR"),
+        "FO": forward,
+        "FORWARD": forward,
+        "BACKWARD": backward,
+        "BK": backward,
+        "RT": right,
+        "RIGHT": right,
+        "LEFT": left,
+        "LT": left,
+        "PENUP": pen_up,
+        "PU": pen_up,
+        "PD": pen_down,
+        "PENDOWN": pen_down,
+        "WIPECLEAN": wipe_clean,
+        "WC": wipe_clean,
+        "CLEARSCREEN": clear_screen,
+        "CS": clear_screen,
+        "HOME": FunctionSymbol("HOME"),
+        "SETXY": FunctionSymbol("SETXY", ['x', 'y']),
+        "PRINT": FunctionSymbol("PRINT", ['data']),
+        "TYPEIN": VariableSymbol("TYPEIN"),
+    }
+
+
 class ScopedSymbolTable(object):
     def __init__(self, scope_name, scope_level, enclosing_scope=None):
-        self._symbols = {}
+        self._symbols = built_in()
         self.scope_name = scope_name
         self.scope_level = scope_level
         self.enclosing_scope = enclosing_scope
@@ -209,10 +250,10 @@ class SemanticAnalyzer(NodeVisitor):
     def visit_InvokeFunction(self, function: InvokeFunction):
         symbol: FunctionSymbol = self._expect_symbol_(function.name, FunctionSymbol)
 
-        if len(function.args) != len(symbol.params):
+        if len(function.args or []) != len(symbol.params or []):
             raise Exception(f"Expected {len(symbol.params)} but {len(function.args)} were informed")
 
-        for param in function.args:
+        for param in function.args or []:
             if param is str:
                 self._expect_symbol_(param, VariableSymbol)
 
