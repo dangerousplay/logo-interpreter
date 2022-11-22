@@ -126,19 +126,19 @@ class ParserTestSpec(unittest.TestCase):
 
     @unpack
     @data(
-        {'expression': 'IF X > 2 THEN \n END',
+        {'expression': 'IF ( X > 2 ) THEN \n END',
          'expected': [IfStatement(BinaryOperation(TokenType.GREATER_THAN, Identifier('X'), 2.0), None, None)]},
-        {'expression': 'IF X THEN \n END',
+        {'expression': 'IF ( X ) THEN \n END',
          'expected': [IfStatement(Identifier('X'), None, None)]},
-        {'expression': 'IF X AND Y THEN \n END',
+        {'expression': 'IF ( X AND Y ) THEN \n END',
          'expected': [IfStatement(BinaryOperation(TokenType.AND, Identifier('X'), Identifier('Y')), None, None)]},
-        {'expression': 'IF X OR Y THEN \n END',
+        {'expression': 'IF ( X OR Y ) THEN \n END',
          'expected': [IfStatement(BinaryOperation(TokenType.OR, Identifier('X'), Identifier('Y')), None, None)]},
-        {'expression': 'IF 1 > 2 THEN \n END',
+        {'expression': 'IF ( 1 > 2 ) THEN \n END',
          'expected': [IfStatement(BinaryOperation(TokenType.GREATER_THAN, 1.0, 2.0), None, None)]},
-        {'expression': 'IF X > Y THEN \n END',
+        {'expression': 'IF ( X > Y ) THEN \n END',
          'expected': [IfStatement(BinaryOperation(TokenType.GREATER_THAN, Identifier('X'), Identifier('Y')), None, None)]},
-        {'expression': 'IF X > Y THEN \n IF X > 2 THEN \n END END',
+        {'expression': 'IF ( X > Y ) THEN \n IF ( X > 2 ) THEN \n END END',
          'expected': [
              IfStatement(
                  BinaryOperation(TokenType.GREATER_THAN, Identifier('X'), Identifier('Y')),
@@ -200,11 +200,11 @@ class ParserTestSpec(unittest.TestCase):
 
     @unpack
     @data(
-        {'expression': 'WHILE X > 2 \n END',
+        {'expression': 'WHILE ( X > 2 ) \n END',
          'expected': [WhileStatement(BinaryOperation(TokenType.GREATER_THAN, Identifier('X'), 2.0), None)]},
-        {'expression': 'WHILE X >= Y \n END',
+        {'expression': 'WHILE ( X >= Y ) \n END',
          'expected': [WhileStatement(BinaryOperation(TokenType.GREATER_EQUAL, Identifier('X'), Identifier('Y')), None)]},
-        {'expression': 'WHILE X >= Y WHILE X < 5 END \n END',
+        {'expression': 'WHILE ( X >= Y ) WHILE ( X < 5 ) END \n END',
          'expected': [
              WhileStatement(
                  BinaryOperation(TokenType.GREATER_EQUAL, Identifier('X'), Identifier('Y')),

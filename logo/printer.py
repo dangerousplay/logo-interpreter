@@ -28,8 +28,9 @@ def print_not_op(op: NotOperation, buffer: StringIO):
 
 
 def print_if_statement(if_statement: IfStatement, buffer: StringIO):
-    buffer.write("IF ")
+    buffer.write("IF (")
     print_bool_expression(if_statement.condition, buffer)
+    buffer.write(") ")
     buffer.write("THEN \n")
 
     for op in if_statement.body or []:
@@ -60,8 +61,9 @@ def print_assignment(op: Assignment, buffer: StringIO):
 
 
 def print_while_statement(statement: WhileStatement, buffer: StringIO):
-    buffer.write("WHILE ")
+    buffer.write("WHILE ( ")
     print_bool_expression(statement.condition, buffer)
+    buffer.write(" )")
 
     for op in statement.body or []:
         print_statement(op, buffer)

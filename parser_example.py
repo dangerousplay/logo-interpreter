@@ -21,7 +21,7 @@ if __name__ == '__main__':
     SET AB = X > 1
     SET BB = X < 2 AND X * 2 + Y < 4 OR X == 1
 
-    IF NOT AB > 2 OR B < 2 THEN
+    IF ( NOT AB > 2 OR B < 2 ) THEN
        
     END
     """

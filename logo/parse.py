@@ -102,24 +102,24 @@ def p_declare_func_arg(p):
 
 
 def p_if(p):
-    """if : IF expression THEN statement_list END"""
-    _assert_bool_expression_(p[2])
+    """if : IF LPAREN expression RPAREN THEN statement_list  END"""
+    _assert_bool_expression_(p[3])
 
-    p[0] = IfStatement(p[2], p[4], else_body=None)
+    p[0] = IfStatement(p[3], p[6], else_body=None)
 
 
 def p_if_else(p):
-    """if : IF expression THEN statement_list ELSE statement_list END"""
-    _assert_bool_expression_(p[2])
+    """if : IF LPAREN expression RPAREN THEN statement_list ELSE statement_list END"""
+    _assert_bool_expression_(p[3])
 
-    p[0] = IfStatement(p[2], p[4], p[6])
+    p[0] = IfStatement(p[3], p[6], p[8])
 
 
 def p_while(p):
-    """while : WHILE expression statement_list END"""
-    _assert_bool_expression_(p[2])
+    """while : WHILE LPAREN expression RPAREN statement_list END"""
+    _assert_bool_expression_(p[3])
 
-    p[0] = WhileStatement(p[2], p[3])
+    p[0] = WhileStatement(p[3], p[5])
 
 
 def p_assignment(p):
