@@ -186,6 +186,12 @@ def p_bool_expression_m(p):
     'bool_expression_eq : math_expression'
     p[0] = p[1]
 
+def p_bool_expression_value(p):
+    """bool_expression_eq : TRUE
+                          | FALSE
+    """
+    p[0] = bool(p[1])
+
 
 def p_expression_p(p):
     'bool_expression_eq : LPAREN expression RPAREN'

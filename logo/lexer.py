@@ -14,6 +14,8 @@ reserved_words = {
    'AND': 'AND',
    'OR': 'OR',
    'SET': 'SET',
+   'TRUE': 'TRUE',
+   'FALSE': 'FALSE',
 }
 
 
@@ -45,6 +47,8 @@ class TokenType(Enum):
     AND = "AND"
     OR = "OR"
     SET = "SET"
+    TRUE = "TRUE"
+    FALSE = "FALSE"
 
 
 def enum_names(enum):
