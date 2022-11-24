@@ -231,6 +231,9 @@ def p_pow_factor(p):
     'pow : factor'
     p[0] = p[1]
 
+def p_factor_string(p):
+    'factor : STRING'
+    p[0] = p[1]
 
 def p_factor_num(p):
     'factor : NUMBER'

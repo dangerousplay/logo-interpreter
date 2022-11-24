@@ -18,6 +18,8 @@ if __name__ == '__main__':
     SET X = 3
     SET Y = 3
 
+    SET Z = 'ABC'
+
     SET AB = X > 1
     SET BB = X < 2 AND X * 2 + Y < 4 OR X == 1
 
