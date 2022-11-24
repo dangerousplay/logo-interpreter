@@ -45,6 +45,7 @@ class TokenType(Enum):
     AND = "AND"
     OR = "OR"
     SET = "SET"
+    STRING = auto()
 
 
 def enum_names(enum):
@@ -96,6 +97,11 @@ BOOL_CONDITION_OPERATORS = [
 def t_NUMBER(t):
     r'(-)?[0-9]+(\.[0-9]+)?'
     t.value = float(t.value)
+    return t
+
+def t_STRING(t):
+    r"['][a-zA-Z_][a-zA-Z0-9_!@#$%^&* ]*[']"    
+    t.value = t.value
     return t
 
 
