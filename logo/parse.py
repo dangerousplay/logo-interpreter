@@ -75,13 +75,12 @@ def p_function_args(p):
 
 
 def p_function_arg(p):
-    """function_arg : COLON ID
-                    | expression
+    """function_arg : NUMBER
+                    | STRING
+                    | bool_literal
+                    | id
     """
-    if len(p) > 2:
-        p[0] = p[2]
-    else:
-        p[0] = p[1]
+    p[0] = p[1]
 
 
 def p_declare_func(p):
@@ -192,8 +191,13 @@ def p_bool_expression_m(p):
 
 
 def p_bool_expression_value(p):
-    """bool_expression_eq : TRUE
-                          | FALSE
+    'bool_expression_eq : bool_literal'
+    p[0] = p[1]
+
+
+def p_bool_literal(p):
+    """bool_literal : TRUE
+                    | FALSE
     """
     p[0] = to_bool(p[1])
 
