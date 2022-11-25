@@ -65,6 +65,7 @@ def built_in():
         "HOME": FunctionSymbol("HOME"),
         "SETXY": FunctionSymbol("SETXY", ['x', 'y']),
         "PRINT": FunctionSymbol("PRINT", ['data']),
+        "WRITE": FunctionSymbol("WRITE", ['data']),
         "TYPEIN": VariableSymbol("TYPEIN"),
     }
 
@@ -206,11 +207,13 @@ class SemanticAnalyzer(NodeVisitor):
         self.current_scope.insert(VariableSymbol(assignment.variable))
 
     def visit_DeclareFunction(self, function: DeclareFunction):
-        self._expect_not_declared_(function.name)
+        function_name = function.name.upper()
+        
+        self._expect_not_declared_(function_name)
 
-        self.current_scope.insert(FunctionSymbol(function.name, function.args))
+        self.current_scope.insert(FunctionSymbol(function_name, function.args))
 
-        self.__enter_scope__(function.name)
+        self.__enter_scope__(function_name)
 
         if function.body:
             for arg in function.args or []:
@@ -250,7 +253,7 @@ class SemanticAnalyzer(NodeVisitor):
         self.current_scope = self.current_scope.enclosing_scope
 
     def visit_InvokeFunction(self, function: InvokeFunction):
-        symbol: FunctionSymbol = self._expect_symbol_(function.name, FunctionSymbol)
+        symbol: FunctionSymbol = self._expect_symbol_(function.name.upper(), FunctionSymbol)
 
         if len(function.args or []) != len(symbol.params or []):
             raise Exception(f"Expected {len(symbol.params)} but {len(function.args)} were informed")
