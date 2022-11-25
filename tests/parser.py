@@ -25,7 +25,7 @@ def generate_statements():
         IfStatement(BinaryOperation(TokenType.GREATER_THAN, Identifier('A'), Identifier('C')), None, None),
         WhileStatement(BinaryOperation(TokenType.GREATER_THAN, Identifier('B'), 2.0), None),
         DeclareFunction('FUNC', ['D', 'E'], None),
-        InvokeFunction('FUNC', ['D', 'E'])
+        InvokeFunction('FUNC', [Identifier('D'), Identifier('E')])
     ]
 
 
@@ -134,19 +134,19 @@ class ParserTestSpec(unittest.TestCase):
 
     @unpack
     @data(
-        {'expression': 'IF ( X > 2 ) THEN \n END',
+        {'expression': 'IF ( :X > 2 ) THEN \n END',
          'expected': [IfStatement(BinaryOperation(TokenType.GREATER_THAN, Identifier('X'), 2.0), None, None)]},
-        {'expression': 'IF ( X ) THEN \n END',
+        {'expression': 'IF ( :X ) THEN \n END',
          'expected': [IfStatement(Identifier('X'), None, None)]},
-        {'expression': 'IF ( X AND Y ) THEN \n END',
+        {'expression': 'IF ( :X AND :Y ) THEN \n END',
          'expected': [IfStatement(BinaryOperation(TokenType.AND, Identifier('X'), Identifier('Y')), None, None)]},
-        {'expression': 'IF ( X OR Y ) THEN \n END',
+        {'expression': 'IF ( :X OR :Y ) THEN \n END',
          'expected': [IfStatement(BinaryOperation(TokenType.OR, Identifier('X'), Identifier('Y')), None, None)]},
         {'expression': 'IF ( 1 > 2 ) THEN \n END',
          'expected': [IfStatement(BinaryOperation(TokenType.GREATER_THAN, 1.0, 2.0), None, None)]},
-        {'expression': 'IF ( X > Y ) THEN \n END',
+        {'expression': 'IF ( :X > :Y ) THEN \n END',
          'expected': [IfStatement(BinaryOperation(TokenType.GREATER_THAN, Identifier('X'), Identifier('Y')), None, None)]},
-        {'expression': 'IF ( X > Y ) THEN \n IF ( X > 2 ) THEN \n END END',
+        {'expression': 'IF ( :X > :Y ) THEN \n IF ( :X > 2 ) THEN \n END END',
          'expected': [
              IfStatement(
                  BinaryOperation(TokenType.GREATER_THAN, Identifier('X'), Identifier('Y')),
@@ -208,11 +208,11 @@ class ParserTestSpec(unittest.TestCase):
 
     @unpack
     @data(
-        {'expression': 'WHILE ( X > 2 ) \n END',
+        {'expression': 'WHILE ( :X > 2 ) \n END',
          'expected': [WhileStatement(BinaryOperation(TokenType.GREATER_THAN, Identifier('X'), 2.0), None)]},
-        {'expression': 'WHILE ( X >= Y ) \n END',
+        {'expression': 'WHILE ( :X >= :Y ) \n END',
          'expected': [WhileStatement(BinaryOperation(TokenType.GREATER_EQUAL, Identifier('X'), Identifier('Y')), None)]},
-        {'expression': 'WHILE ( X >= Y ) WHILE ( X < 5 ) END \n END',
+        {'expression': 'WHILE ( :X >= :Y ) WHILE ( :X < 5 ) END \n END',
          'expected': [
              WhileStatement(
                  BinaryOperation(TokenType.GREATER_EQUAL, Identifier('X'), Identifier('Y')),
@@ -264,7 +264,7 @@ class ParserTestSpec(unittest.TestCase):
          'expected': [DeclareFunction('FUNC', ['a'], None)]},
         {'expression': 'TO FUNC END',
          'expected': [DeclareFunction('FUNC', None, None)]},
-        {'expression': 'TO FUNC :b \n SET a = 1234 \n SET c = b > a \n END',
+        {'expression': 'TO FUNC :b \n a = 1234 \n c = :b > :a \n END',
          'expected': [
              DeclareFunction(
                 'FUNC', ['b'],

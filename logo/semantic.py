@@ -178,7 +178,8 @@ class SemanticAnalyzer(NodeVisitor):
         self.__exit_scope__()
 
     def visit_IfStatement(self, statement: IfStatement):
-        self.visit(statement.condition)
+        if not isinstance(statement.condition, bool):
+            self.visit(statement.condition)
 
         self.__enter_scope__("IF")
 
@@ -255,8 +256,8 @@ class SemanticAnalyzer(NodeVisitor):
             raise Exception(f"Expected {len(symbol.params)} but {len(function.args)} were informed")
 
         for param in function.args or []:
-            if param is str:
-                self._expect_symbol_(param, VariableSymbol)
+            if param is Identifier:
+                self._expect_symbol_(param.value, VariableSymbol)
 
     def _expect_symbol_(self, name: str, symbol_type=None, current_scope_only=False):
         symbol = self.current_scope.lookup(name, current_scope_only)

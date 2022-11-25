@@ -123,8 +123,8 @@ def p_while(p):
 
 
 def p_assignment(p):
-    """assignment : SET ID EQUAL expression"""
-    p[0] = Assignment(p[2], p[4])
+    """assignment : ID EQUAL expression"""
+    p[0] = Assignment(p[1], p[3])
 
 
 def p_expression_and(p):
@@ -253,9 +253,8 @@ def p_factor_id(p):
 
 
 def p_id(p):
-    'id : ID'
-    p[0] = Identifier(p[1])
-
+    """id : COLON ID"""
+    p[0] = Identifier(p[2])
 
 def p_factor_expr(p):
     'factor : LPAREN math_expression RPAREN'

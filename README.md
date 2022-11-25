@@ -30,28 +30,28 @@ There is one example in then [parser_example.py](./parser_example.py) file that 
 
 ```logo
 TO RR :AABB
- SET B = AABB ^ 2
+ B = :AABB ^ 2
 END
 
 RR 1234
 
-SET B = 13
-SET C = true and false
+B = 13
+C = true and false
 
-RR B
-SET X = 3
-SET Y = 3
+RR :B
+X = 3
+Y = 3
 
-SET Z = 'ABC'
+Z = 'ABC'
 
-SET AB = X > 1
-SET BB = X < 2 AND X * 2 + Y < 4 OR X == 1
+AB = :X > 1
+BB = :X < 2 AND :X * 2 + :Y < 4 OR :X == 1
 
-IF ( NOT AB > 2 OR B < 2 ) THEN
+IF ( NOT :AB > 2 OR :B < 2 ) THEN
    
 END
 
-WHILE (TRUE OR AB < 2)
+WHILE (TRUE OR :AB < 2)
 END
 ```
 
