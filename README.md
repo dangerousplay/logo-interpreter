@@ -42,6 +42,8 @@ RR B
 SET X = 3
 SET Y = 3
 
+SET Z = 'ABC'
+
 SET AB = X > 1
 SET BB = X < 2 AND X * 2 + Y < 4 OR X == 1
 
@@ -62,7 +64,7 @@ python3 parser_example.py
 Should return the following printed object tree:
 
 ```text
-┐ → list[items=11]
+┐ → list[items=12]
 ├── 0 → DeclareFunction[items=3]
 │   ├── 0: RR
 │   ├── 1 → list[items=1]
@@ -100,13 +102,16 @@ Should return the following printed object tree:
 │   ├── 0: Y
 │   └── 1: 3.0
 ├── 7 → Assignment[items=2]
+│   ├── 0: Z
+│   └── 1: ABC
+├── 8 → Assignment[items=2]
 │   ├── 0: AB
 │   └── 1 → BinaryOperation[items=3]
 │       ├── 0: TokenType.GREATER_THAN
 │       ├── 1 → Identifier[items=1]
 │       │   └── 0: X
 │       └── 2: 1.0
-├── 8 → Assignment[items=2]
+├── 9 → Assignment[items=2]
 │   ├── 0: BB
 │   └── 1 → BinaryOperation[items=3]
 │       ├── 0: TokenType.AND
@@ -134,7 +139,7 @@ Should return the following printed object tree:
 │               ├── 1 → Identifier[items=1]
 │               │   └── 0: X
 │               └── 2: 1.0
-├── 9 → IfStatement[items=3]
+├── 10 → IfStatement[items=3]
 │   ├── 0 → BinaryOperation[items=3]
 │   │   ├── 0: TokenType.OR
 │   │   ├── 1 → NotOperation[items=1]
@@ -150,7 +155,7 @@ Should return the following printed object tree:
 │   │       └── 2: 2.0
 │   ├── 1: None
 │   └── 2: None
-└── 10 → WhileStatement[items=2]
+└── 11 → WhileStatement[items=2]
     ├── 0 → BinaryOperation[items=3]
     │   ├── 0: TokenType.OR
     │   ├── 1: True
