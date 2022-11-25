@@ -14,6 +14,8 @@ reserved_words = {
    'AND': 'AND',
    'OR': 'OR',
    'SET': 'SET',
+   'TRUE': 'TRUE',
+   'FALSE': 'FALSE',
 }
 
 
@@ -45,6 +47,8 @@ class TokenType(Enum):
     AND = "AND"
     OR = "OR"
     SET = "SET"
+    TRUE = "TRUE"
+    FALSE = "FALSE"
     STRING = auto()
 
 
@@ -100,7 +104,7 @@ def t_NUMBER(t):
     return t
 
 def t_STRING(t):
-    r"['][a-zA-Z_][a-zA-Z0-9_!@#$%^&* ]*[']"    
+    r"['][a-zA-Z_][a-zA-Z0-9_!@#$%^&* ]*[']"
     t.value = t.value
     return t
 

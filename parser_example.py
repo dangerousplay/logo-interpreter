@@ -13,6 +13,7 @@ if __name__ == '__main__':
     RR 1234
     
     SET B = 13
+    SET C = true and false
     
     RR B
     SET X = 3
@@ -25,6 +26,9 @@ if __name__ == '__main__':
 
     IF ( NOT AB > 2 OR B < 2 ) THEN
        
+    END
+    
+    WHILE (TRUE OR AB < 2)
     END
     """
 
