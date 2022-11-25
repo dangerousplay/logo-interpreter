@@ -103,15 +103,16 @@ def t_NUMBER(t):
     t.value = float(t.value)
     return t
 
-def t_STRING(t):
-    r"['][a-zA-Z_][a-zA-Z0-9_!@#$%^&* ]*[']"
-    t.value = t.value
-    return t
-
 
 def t_ID(t):
     r'[a-zA-Z_][a-zA-Z0-9_]*'
     t.type = reserved_words.get(t.value.upper(), 'ID')
+    return t
+
+
+def t_STRING(t):
+    r"""("[^"]*"|'[^']*')"""
+    t.value = t.value[1:-1]
     return t
 
 

@@ -137,6 +137,10 @@ def p_bool_expression_or(p):
     p[0] = BinaryOperation(TokenType.OR, p[1], p[3])
 
 
+def p_expression_string(p):
+    'expression : STRING'
+    p[0] = p[1]
+
 def p_bool_expression(p):
     'expression : expression_not'
     p[0] = p[1]
@@ -236,10 +240,6 @@ def p_pow(p):
 
 def p_pow_factor(p):
     'pow : factor'
-    p[0] = p[1]
-
-def p_factor_string(p):
-    'factor : STRING'
     p[0] = p[1]
 
 def p_factor_num(p):
