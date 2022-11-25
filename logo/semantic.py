@@ -166,7 +166,8 @@ class SemanticAnalyzer(NodeVisitor):
         self.visit(op.expression)
 
     def visit_WhileStatement(self, statement: WhileStatement):
-        self.visit(statement.condition)
+        if not isinstance(statement.condition, bool):
+            self.visit(statement.condition)
 
         self.__enter_scope__("WHILE")
 

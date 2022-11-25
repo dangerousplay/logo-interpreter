@@ -80,7 +80,15 @@ def generate_bool_expressions():
 
     combine_pairs = list(combinations(simple_comparisons, 2))
 
+    boolean_values = list(combinations(
+        [True, False, True],
+        2
+    ))
+
     for operator in BOOL_CONDITION_OPERATORS:
+        for left, right in boolean_values:
+            possibilities.append(BinaryOperation(operator, left, right))
+
         for left, right in combine_pairs:
             possibilities.append(BinaryOperation(operator, left, right))
 

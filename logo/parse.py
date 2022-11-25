@@ -186,11 +186,12 @@ def p_bool_expression_m(p):
     'bool_expression_eq : math_expression'
     p[0] = p[1]
 
+
 def p_bool_expression_value(p):
     """bool_expression_eq : TRUE
                           | FALSE
     """
-    p[0] = bool(p[1])
+    p[0] = to_bool(p[1])
 
 
 def p_expression_p(p):
@@ -259,7 +260,7 @@ def p_factor_expr(p):
 
 
 def _assert_bool_expression_(p):
-    if isinstance(p, Identifier):
+    if isinstance(p, (Identifier, bool)):
         return
     elif isinstance(p, BinaryOperation):
         _assert_bool_condition_(p)
@@ -278,6 +279,18 @@ def _assert_bool_condition_(p: BinaryOperation):
         _assert_bool_expression_(p.right)
 
 
+def to_bool(bool_str):
+    """Parse the string and return the boolean value encoded or raise an exception"""
+    if isinstance(bool_str, str) and bool_str:
+        if bool_str.lower() in ['true', 't', '1']:
+            return True
+        elif bool_str.lower() in ['false', 'f', '0']:
+            return False
+
+    # if here we couldn't parse it
+    raise ValueError("%s is no recognized as a boolean value" % bool_str)
+
+
 # Error rule for syntax errors
 def p_error(token):
     if token:
@@ -289,4 +302,3 @@ def p_error(token):
 
 
 parser = yacc.yacc()
-
