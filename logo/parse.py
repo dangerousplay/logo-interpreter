@@ -75,13 +75,12 @@ def p_function_args(p):
 
 
 def p_function_arg(p):
-    """function_arg : COLON ID
-                    | expression
+    """function_arg : NUMBER
+                    | STRING
+                    | bool_literal
+                    | id
     """
-    if len(p) > 2:
-        p[0] = p[2]
-    else:
-        p[0] = p[1]
+    p[0] = p[1]
 
 
 def p_declare_func(p):
@@ -123,8 +122,8 @@ def p_while(p):
 
 
 def p_assignment(p):
-    """assignment : SET ID EQUAL expression"""
-    p[0] = Assignment(p[2], p[4])
+    """assignment : ID EQUAL expression"""
+    p[0] = Assignment(p[1], p[3])
 
 
 def p_expression_and(p):
@@ -136,6 +135,10 @@ def p_bool_expression_or(p):
     'expression : expression OR expression'
     p[0] = BinaryOperation(TokenType.OR, p[1], p[3])
 
+
+def p_expression_string(p):
+    'expression : STRING'
+    p[0] = p[1]
 
 def p_bool_expression(p):
     'expression : expression_not'
@@ -188,8 +191,13 @@ def p_bool_expression_m(p):
 
 
 def p_bool_expression_value(p):
-    """bool_expression_eq : TRUE
-                          | FALSE
+    'bool_expression_eq : bool_literal'
+    p[0] = p[1]
+
+
+def p_bool_literal(p):
+    """bool_literal : TRUE
+                    | FALSE
     """
     p[0] = to_bool(p[1])
 
@@ -238,7 +246,6 @@ def p_pow_factor(p):
     'pow : factor'
     p[0] = p[1]
 
-
 def p_factor_num(p):
     'factor : NUMBER'
     p[0] = p[1]
@@ -250,9 +257,8 @@ def p_factor_id(p):
 
 
 def p_id(p):
-    'id : ID'
-    p[0] = Identifier(p[1])
-
+    """id : COLON ID"""
+    p[0] = Identifier(p[2])
 
 def p_factor_expr(p):
     'factor : LPAREN math_expression RPAREN'

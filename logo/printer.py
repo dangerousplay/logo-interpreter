@@ -10,7 +10,7 @@ def print_binary_operation(bop: BinaryOperation, buffer: StringIO):
         if isinstance(value, BinaryOperation):
             print_binary_operation(value, buffer)
         elif isinstance(value, Identifier):
-            buffer.write(f"{value.value} ")
+            print_identifier(value, buffer)
         else:
             buffer.write(f"{value} ")
 
@@ -48,12 +48,12 @@ def print_if_statement(if_statement: IfStatement, buffer: StringIO):
 
 
 def print_assignment(op: Assignment, buffer: StringIO):
-    buffer.write(f"SET {op.variable} = ")
+    buffer.write(f"{op.variable} = ")
 
     if isinstance(op.value, BinaryOperation):
         print_binary_operation(op.value, buffer)
     elif isinstance(op.value, Identifier):
-        buffer.write(f"{op.value.value} ")
+        print_identifier(op.value, buffer)
     elif isinstance(op.value, NotOperation):
         print_not_op(op.value, buffer)
     else:
@@ -91,7 +91,10 @@ def print_invoke_function(func: InvokeFunction, buffer: StringIO):
     buffer.write(f"{func.name} ")
 
     for arg in func.args or []:
-        buffer.write(f":{arg} ")
+        if isinstance(arg, Identifier):
+            print_identifier(arg, buffer)
+        else:
+            buffer.write(f":{arg} ")
 
     buffer.write("\n")
 
@@ -111,7 +114,7 @@ def print_statement(op, buffer: StringIO):
 
 def print_bool_expression(op, buffer: StringIO):
     if isinstance(op, Identifier):
-        buffer.write(f"{op.value} ")
+        print_identifier(op, buffer)
     elif isinstance(op, NotOperation):
         print_not_op(op, buffer)
     elif isinstance(op, BinaryOperation):
@@ -119,6 +122,9 @@ def print_bool_expression(op, buffer: StringIO):
     else:
         buffer.write(f"{op} ")
 
+
+def print_identifier(op, buffer):
+    buffer.write(f":{op.value} ")
 
 
 def print_program(ast: List[Any]) -> str:

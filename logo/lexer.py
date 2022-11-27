@@ -49,6 +49,7 @@ class TokenType(Enum):
     SET = "SET"
     TRUE = "TRUE"
     FALSE = "FALSE"
+    STRING = auto()
 
 
 def enum_names(enum):
@@ -106,6 +107,12 @@ def t_NUMBER(t):
 def t_ID(t):
     r'[a-zA-Z_][a-zA-Z0-9_]*'
     t.type = reserved_words.get(t.value.upper(), 'ID')
+    return t
+
+
+def t_STRING(t):
+    r"""("[^"]*"|'[^']*')"""
+    t.value = t.value[1:-1]
     return t
 
 
