@@ -66,7 +66,7 @@ def built_in():
         "SETXY": FunctionSymbol("SETXY", ['x', 'y']),
         "PRINT": FunctionSymbol("PRINT", ['data']),
         "WRITE": FunctionSymbol("WRITE", ['data']),
-        "TYPEIN": VariableSymbol("TYPEIN"),
+        "TYPEIN": FunctionSymbol("TYPEIN", []),
     }
 
 
@@ -76,6 +76,7 @@ class ScopedSymbolTable(object):
         self.scope_name = scope_name
         self.scope_level = scope_level
         self.enclosing_scope = enclosing_scope
+        self.children_scopes = []
 
     def __str__(self):
         buffer = StringIO()
@@ -104,15 +105,21 @@ class ScopedSymbolTable(object):
 
         self._symbols[symbol.name] = symbol
 
+    def full_name(self):
+        if self.enclosing_scope:
+            return f"{self.enclosing_scope.full_name()}_{self.scope_name}"
+        else:
+            return self.scope_name
+
     def lookup(self, name, current_scope_only=False):
         logging.debug('Lookup for symbol: %s. (Scope name: %s)' % (name, self.scope_name))
         symbol = self._symbols.get(name)
 
         if symbol is not None:
-            return symbol
+            return symbol, self.full_name()
 
         if current_scope_only:
-            return None
+            return None, None
 
         # recursively go up the chain and lookup the name
         if self.enclosing_scope is not None:
@@ -208,7 +215,7 @@ class SemanticAnalyzer(NodeVisitor):
 
     def visit_DeclareFunction(self, function: DeclareFunction):
         function_name = function.name.upper()
-        
+
         self._expect_not_declared_(function_name)
 
         self.current_scope.insert(FunctionSymbol(function_name, function.args))
@@ -234,7 +241,7 @@ class SemanticAnalyzer(NodeVisitor):
         )
 
     def _expect_not_declared_(self, name: str, type=None, current_scope_only=True):
-        symbol: Symbol = self.current_scope.lookup(name, current_scope_only)
+        symbol, _ = self.current_scope.lookup(name, current_scope_only)
 
         def throw():
             raise RedeclaredSymbolException(
@@ -263,7 +270,7 @@ class SemanticAnalyzer(NodeVisitor):
                 self._expect_symbol_(param.value, VariableSymbol)
 
     def _expect_symbol_(self, name: str, symbol_type=None, current_scope_only=False):
-        symbol = self.current_scope.lookup(name, current_scope_only)
+        symbol, _ = self.current_scope.lookup(name, current_scope_only)
 
         if symbol:
             if not symbol_type:
