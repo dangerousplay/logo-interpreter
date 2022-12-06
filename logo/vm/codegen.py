@@ -13,7 +13,7 @@ from logo.parse import BinaryOperation, NotOperation, WhileStatement, IfStatemen
 from logo.semantic import NodeVisitor, ScopedSymbolTable, VariableSymbol, FunctionSymbol, Symbol, \
     RedeclaredSymbolException, TypeMismatchException
 from logo.vm.isa import Load, And, Or, Not, Compare, Store, Push, Label, Add, JumpZ, Jump, JumpLess, Return, Subtract, \
-    Multiply, Divide, Pow, DefineFunction, JumpNZ, JumpMore, Call, Set, Unset
+    Multiply, Divide, Pow, DefineFunction, JumpNZ, JumpMore, Call, Set, Truncate, Unset
 
 
 def mangle_variable(scope: str, variable: str) -> str:
@@ -104,8 +104,10 @@ class CodeGenerator(NodeVisitor):
             instructions.extend([JumpZ(increment_label.name), Jump(end_label.name), increment_label, end_label])
 
         if op.op is TokenType.AND:
+            instructions.append(Truncate())
             instructions.append(And())
         elif op.op is TokenType.OR:
+            instructions.append(Truncate())
             instructions.append(Or())
         elif op.op in COMPARISON_OPERATORS:
             variable = self._new_variable_("cmp", 0)
@@ -177,11 +179,13 @@ class CodeGenerator(NodeVisitor):
         instructions = []
         body_instructions = []
         else_instructions = []
+        end_label = self._new_label_("end_if", [])
 
         if statement.body:
             for st in statement.body or []:
                 body_instructions.extend(self.visit(st))
-
+                
+            body_instructions.append(Jump(end_label.name))    
         if statement.else_body:
             for st in statement.else_body or []:
                 else_instructions.extend(self.visit(st))
@@ -197,9 +201,9 @@ class CodeGenerator(NodeVisitor):
                 return else_instructions
 
         body_label = self._new_label_("body", body_instructions)
-        else_label = self._new_label_("else_body", body_instructions)
-
-        instructions.extend([Compare(1), JumpZ(body_label.name), Jump(else_label.name), body_label, else_label])
+        else_label = self._new_label_("else_body", else_instructions)
+        
+        instructions.extend([Compare(1), JumpZ(body_label.name), Jump(end_label.name), body_label, else_label, end_label])
 
         return instructions
 
@@ -237,7 +241,10 @@ class CodeGenerator(NodeVisitor):
                 instructions.append(self._store_(arg))
 
             for statement in function.body or []:
-                instructions.extend(self.visit(statement))
+                if isinstance(statement, DeclareFunction):
+                    self.visit(statement)
+                else:
+                    instructions.extend(self.visit(statement))
 
         instructions.append(Return())
 

@@ -1,10 +1,10 @@
 from collections import namedtuple
 
-Load = namedtuple("Load", "id")
+Load = namedtuple("LOAD", "id")
 Push = namedtuple("PUSH", "value")
 Pop = namedtuple("POP", "")
 Duplicate = namedtuple("DUP", "")
-Store = namedtuple("STORE", "id")
+Store = namedtuple("STOR", "id")
 
 Compare = namedtuple("CMP", "value")
 
@@ -27,6 +27,7 @@ Random = namedtuple("RAND", "")
 Not = namedtuple("NOT", "")
 And = namedtuple("AND", "")
 Or = namedtuple("OR", "")
+Truncate = namedtuple("TRUNC","")
 
 Skipnz = namedtuple("SKIPNZ", "")
 Skipz = namedtuple("SKIPZ", "")
