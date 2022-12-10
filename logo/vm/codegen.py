@@ -3,7 +3,7 @@
 
 import logging
 from io import StringIO
-from typing import Any
+from typing import Any, List
 
 from tabulate import tabulate
 
@@ -12,6 +12,7 @@ from logo.parse import BinaryOperation, NotOperation, WhileStatement, IfStatemen
     InvokeFunction, Identifier
 from logo.semantic import NodeVisitor, ScopedSymbolTable, VariableSymbol, FunctionSymbol, Symbol, \
     RedeclaredSymbolException, TypeMismatchException
+from logo.vm.built_in import built_in_functions, BuiltInFunctions
 from logo.vm.isa import Load, And, Or, Not, Compare, Store, Push, Label, Add, JumpZ, Jump, JumpLess, Return, Subtract, \
     Multiply, Divide, Pow, DefineFunction, JumpNZ, JumpMore, Call, Set, Truncate, Unset
 
@@ -31,8 +32,7 @@ class CodeGenerator(NodeVisitor):
             scope_level=1,
             enclosing_scope=None,
         )
-        self.variables = {}
-        self.functions = {}
+        self.functions, self.variables = built_in_functions()
         self._label_counter_ = 0
 
         self.false_label = None
@@ -78,6 +78,8 @@ class CodeGenerator(NodeVisitor):
 
             if isinstance(value, bool):
                 value = int(value)
+            elif isinstance(value, str):
+                value = '"' + value + '"'
 
             instructions.append(Push(value))
 
@@ -215,6 +217,7 @@ class CodeGenerator(NodeVisitor):
 
         if isinstance(statement.condition, Identifier):
             instructions.append(self._load_variable_(statement.condition.value))
+            instructions.extend([Compare(1), JumpZ(body_label.name), Jump(else_label.name)])
         elif isinstance(statement.condition, tuple):
             instructions.extend(self.visit(statement.condition))
         elif isinstance(statement.condition, bool):
@@ -232,11 +235,24 @@ class CodeGenerator(NodeVisitor):
 
         self._new_variable_(assignment.variable, 0)
 
+        store_label = self._new_label_("assign_store", [self._store_(assignment.variable)])
+
+        true_label = self._new_label_("assign_true", [Push(1), Jump(store_label.name)])
+        false_label = self._new_label_("assign_false", [Push(0), Jump(store_label.name)])
+
+        original_labels = [self.true_label, self.false_label]
+
+        self.true_label = true_label.name
+        self.false_label = false_label.name
+
         instructions = []
 
         instructions.extend(self._push_value_(assignment.value))
+        instructions.append(Jump(store_label.name))
 
-        instructions.append(self._store_(assignment.variable))
+        self.true_label, self.false_label = original_labels
+
+        instructions.extend([true_label, false_label, store_label])
 
         return instructions
 
@@ -273,25 +289,31 @@ class CodeGenerator(NodeVisitor):
         return instructions
 
     def visit_InvokeFunction(self, function: InvokeFunction):
-        symbol: FunctionSymbol = self._expect_symbol_(function.name.upper(), FunctionSymbol)
+        function_name = function.name.upper()
+        symbol: FunctionSymbol = self._expect_symbol_(function_name, FunctionSymbol)
+
+        instructions = self.built_in_function(function)
+
+        if instructions:
+            return instructions
 
         instructions = []
 
         if len(function.args or []) != len(symbol.params or []):
             raise Exception(f"Expected {len(symbol.params)} but {len(function.args)} were informed")
 
-        for param in function.args or []:
-            if param is Identifier:
-                self._expect_symbol_(param.value, VariableSymbol)
-
-            if isinstance(param, str):
-                param = Identifier(param)
-
-            instructions.extend(self._push_value_(param))
+        self._function_parameters_(function, instructions)
 
         instructions.append(Call(function.name))
 
         return instructions
+
+    def _function_parameters_(self, function, instructions):
+        for param in function.args or []:
+            if param is Identifier:
+                self._expect_symbol_(param.value, VariableSymbol)
+
+            instructions.extend(self._push_value_(param))
 
     def visit_Identifier(self, id: Identifier):
         self._expect_symbol_(id.value)
@@ -340,6 +362,15 @@ class CodeGenerator(NodeVisitor):
             raise Exception(f"Not found symbol of type {symbol_type} with name {name}")
 
         return symbol
+
+    def built_in_function(self, function) -> List[Any]:
+        instructions = []
+
+        if function.name.upper() == BuiltInFunctions.WRITE.value:
+            self._function_parameters_(function, instructions)
+            instructions.extend([Push(len(function.args or [])), Call(BuiltInFunctions.WRITE.value)])
+
+            return instructions
 
 
 def print_program(code: CodeGenerator, start: str) -> str:

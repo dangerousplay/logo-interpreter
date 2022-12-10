@@ -1,3 +1,4 @@
+import enum
 from collections import namedtuple
 
 Load = namedtuple("LOAD", "id")
@@ -45,5 +46,12 @@ Set = namedtuple("SET", "number")
 Unset = namedtuple("UNSET", "number")
 
 Return = namedtuple("RET", "")
+
+
+class Flags(enum.IntEnum):
+    PEN = 1
+    DRAW = 2
+    ERASE = 3
+    EXC = 5
 
 
