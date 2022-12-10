@@ -7,7 +7,7 @@ from typing import Any
 
 from tabulate import tabulate
 
-from logo.lexer import TokenType, COMPARISON_OPERATORS, ARITHMETIC_OPERATORS
+from logo.lexer import TokenType, COMPARISON_OPERATORS, ARITHMETIC_OPERATORS, BOOL_CONDITION_OPERATORS
 from logo.parse import BinaryOperation, NotOperation, WhileStatement, IfStatement, Assignment, DeclareFunction, \
     InvokeFunction, Identifier
 from logo.semantic import NodeVisitor, ScopedSymbolTable, VariableSymbol, FunctionSymbol, Symbol, \
@@ -35,6 +35,9 @@ class CodeGenerator(NodeVisitor):
         self.functions = {}
         self._label_counter_ = 0
 
+        self.false_label = None
+        self.true_label = None
+
     def _new_variable_(self, name: str, value: Any):
         variable_name = mangle_variable(self.current_scope.full_name(), name)
         self.variables[variable_name] = value
@@ -45,14 +48,16 @@ class CodeGenerator(NodeVisitor):
         return variable_name
 
     def _new_label_(self, name: str, instructions: list) -> Label:
-        self._label_counter_ += 1
-
-        label_name = mangle_label(self.current_scope.full_name(), name) + f"_{self._label_counter_}"
-        label = Label(label_name, instructions)
+        label = Label(self._new_label_name_(name), instructions)
 
         self.current_scope.insert(label)
 
         return label
+
+    def _new_label_name_(self, name: str) -> str:
+        self._label_counter_ += 1
+
+        return mangle_label(self.current_scope.full_name(), name) + f"_{self._label_counter_}"
 
     def _load_variable_(self, name: str):
         variable_name = self._get_variable_name_(name)
@@ -80,68 +85,77 @@ class CodeGenerator(NodeVisitor):
 
     def visit_BinaryOperation(self, op: BinaryOperation):
         instructions = []
-        left_instructions = []
-        right_instructions = []
 
-        def operand(op):
-            if isinstance(op, Identifier):
-                return [self._load_variable_(op.value)]
-            if isinstance(op, tuple):
-                return self.visit(op)
-            else:
-                return [Push(op)]
+        if op.op in COMPARISON_OPERATORS or op.op in BOOL_CONDITION_OPERATORS:
+            instructions.extend(self._visit_bool_expression_(op))
+        else:
+            instructions.extend(self._push_value_(op.left))
+            instructions.extend(self._push_value_(op.right))
 
-        left_instructions.extend(self._push_value_(op.left))
-        right_instructions.extend(self._push_value_(op.right))
+            if op.op is TokenType.MINUS:
+                instructions.append(Subtract())
+            elif op.op is TokenType.PLUS:
+                instructions.append(Add())
+            elif op.op is TokenType.TIMES:
+                instructions.append(Multiply())
+            elif op.op is TokenType.DIVIDE:
+                instructions.append(Divide())
+            elif op.op is TokenType.POW:
+                instructions.append(Pow())
 
-        instructions.extend(left_instructions)
-        instructions.extend(right_instructions)
+        return instructions
 
-        def _on_zero_increment_(amount: int):
-            increment_label = self._new_label_("increment", [Push(amount), Add()])
-            end_label = self._new_label_("end_increment", [])
+    def _visit_bool_expression_(self, op: BinaryOperation):
+        instructions = []
 
-            instructions.extend([JumpZ(increment_label.name), Jump(end_label.name), increment_label, end_label])
+        original_true_label = self.true_label
+        original_false_label = self.false_label
 
         if op.op is TokenType.AND:
-            instructions.append(Truncate())
-            instructions.append(And())
+            true_label = self._new_label_name_("and_true")
+            self.true_label = true_label
+
+            instructions.extend(self._push_value_(op.left))
+
+            self.true_label = original_true_label
+
+            true_label = Label(true_label, self._push_value_(op.right))
+
+            instructions.extend([true_label])
         elif op.op is TokenType.OR:
-            instructions.append(Truncate())
-            instructions.append(Or())
+            false_label = self._new_label_name_("or_false")
+
+            self.false_label = false_label
+
+            instructions.extend(self._push_value_(op.left))
+
+            false_label = Label(false_label, self._push_value_(op.right))
+
+            instructions.extend([false_label])
         elif op.op in COMPARISON_OPERATORS:
             variable = self._new_variable_("cmp", 0)
+
+            instructions.extend(self._push_value_(op.left))
+            instructions.extend(self._push_value_(op.right))
 
             instructions.append(Store(variable))
             instructions.append(Compare(variable))
 
             if op.op is TokenType.GREATER_THAN:
-                instructions.append(Not())
+                instructions.extend([JumpMore(self.true_label), Jump(self.false_label)])
             elif op.op is TokenType.GREATER_EQUAL:
-                _on_zero_increment_(1)
+                instructions.extend([JumpMore(self.true_label), JumpZ(self.true_label), Jump(self.false_label)])
             elif op.op is TokenType.LESS_EQUAL:
-                _on_zero_increment_(1)
+                instructions.extend([JumpLess(self.true_label), JumpZ(self.true_label), Jump(self.false_label)])
             elif op.op is TokenType.IS_EQUAL:
-                _on_zero_increment_(1)
+                instructions.extend([JumpZ(self.true_label), Jump(self.false_label)])
             elif op.op is TokenType.NOT_EQUAL:
-                increment_label = self._new_label_("increment", [Push(2), Add()])
-                end_label = self._new_label_("end_cmp_neq", [])
+                instructions.extend([JumpMore(self.false_label), Jump(self.true_label)])
+            elif op.op is TokenType.LESS_THAN:
+                instructions.extend([JumpLess(self.true_label), Jump(self.false_label)])
 
-                instructions.extend([JumpLess(increment_label.name), Jump(end_label.name), increment_label, end_label])
-            else:
-                pass
-        elif op.op is TokenType.MINUS:
-            instructions.append(Subtract())
-        elif op.op is TokenType.PLUS:
-            instructions.append(Add())
-        elif op.op is TokenType.TIMES:
-            instructions.append(Multiply())
-        elif op.op is TokenType.DIVIDE:
-            instructions.append(Divide())
-        elif op.op is TokenType.POW:
-            instructions.append(Pow())
-        else:
-            raise Exception(f"Unknown operation: {op}")
+        self.true_label = original_true_label
+        self.false_label = original_false_label
 
         return instructions
 
@@ -158,6 +172,12 @@ class CodeGenerator(NodeVisitor):
             for st in statement.body or []:
                 body_instructions.extend(self.visit(st))
 
+        end_label = self._new_label_("end_while", [])
+        body_label = self._new_label_("body_while", body_instructions)
+
+        self.true_label = body_label.name
+        self.false_label = end_label.name
+
         if isinstance(statement.condition, Identifier):
             condition_instructions.append(self._load_variable_(statement.condition.value))
         elif isinstance(statement.condition, tuple):
@@ -168,12 +188,9 @@ class CodeGenerator(NodeVisitor):
             else:
                 return []
 
-        end_label = self._new_label_("end_while", [])
-        while_label = self._new_label_("while", condition_instructions + body_instructions)
+        while_label = self._new_label_("while", condition_instructions)
 
-        loop_instructions = [Compare(1), JumpZ(while_label.name), Jump(end_label.name), while_label, Jump(while_label.name), end_label]
-
-        return condition_instructions + loop_instructions
+        return [while_label, body_label, Jump(while_label.name), end_label]
 
     def visit_IfStatement(self, statement: IfStatement):
         instructions = []
@@ -190,6 +207,12 @@ class CodeGenerator(NodeVisitor):
             for st in statement.else_body or []:
                 else_instructions.extend(self.visit(st))
 
+        body_label = self._new_label_("body", body_instructions)
+        else_label = self._new_label_("else_body", else_instructions)
+
+        self.true_label = body_label.name
+        self.false_label = else_label.name
+
         if isinstance(statement.condition, Identifier):
             instructions.append(self._load_variable_(statement.condition.value))
         elif isinstance(statement.condition, tuple):
@@ -199,11 +222,8 @@ class CodeGenerator(NodeVisitor):
                 return body_instructions
             else:
                 return else_instructions
-
-        body_label = self._new_label_("body", body_instructions)
-        else_label = self._new_label_("else_body", else_instructions)
         
-        instructions.extend([Compare(1), JumpZ(body_label.name), Jump(end_label.name), body_label, else_label, end_label])
+        instructions.extend([body_label, else_label, end_label])
 
         return instructions
 
