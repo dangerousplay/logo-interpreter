@@ -5,16 +5,14 @@ import logging
 from io import StringIO
 from typing import Any, List
 
-from tabulate import tabulate
-
-from logo.lexer import TokenType, COMPARISON_OPERATORS, ARITHMETIC_OPERATORS, BOOL_CONDITION_OPERATORS
+from logo.lexer import TokenType, COMPARISON_OPERATORS, BOOL_CONDITION_OPERATORS
 from logo.parse import BinaryOperation, NotOperation, WhileStatement, IfStatement, Assignment, DeclareFunction, \
     InvokeFunction, Identifier
-from logo.semantic import NodeVisitor, ScopedSymbolTable, VariableSymbol, FunctionSymbol, Symbol, \
+from logo.semantic import NodeVisitor, ScopedSymbolTable, VariableSymbol, FunctionSymbol, \
     RedeclaredSymbolException, TypeMismatchException
-from logo.vm.built_in import built_in_functions, BuiltInFunctions
-from logo.vm.isa import Load, And, Or, Not, Compare, Store, Push, Label, Add, JumpZ, Jump, JumpLess, Return, Subtract, \
-    Multiply, Divide, Pow, DefineFunction, JumpNZ, JumpMore, Call, Set, Truncate, Unset
+from logo.vm.built_in import built_in_functions, BuiltInFunctions, BuiltInVars, GlobalVariables
+from logo.vm.isa import Load, Not, Compare, Store, Push, Label, Add, JumpZ, Jump, JumpLess, Return, Subtract, \
+    Multiply, Divide, Pow, DefineFunction, JumpNZ, JumpMore, Call, Set, Truncate, Unset, Random
 
 
 def mangle_variable(scope: str, variable: str) -> str:
@@ -70,7 +68,12 @@ class CodeGenerator(NodeVisitor):
         instructions = []
 
         if isinstance(expression, Identifier):
-            instructions.append(self._load_variable_(expression.value))
+            instructions = self._built_in_variable_(expression.value)
+
+            if instructions:
+                return instructions
+
+            instructions = [self._load_variable_(expression.value)]
         elif isinstance(expression, tuple):
             instructions.extend(self.visit(expression))
         else:
@@ -182,6 +185,7 @@ class CodeGenerator(NodeVisitor):
 
         if isinstance(statement.condition, Identifier):
             condition_instructions.append(self._load_variable_(statement.condition.value))
+            condition_instructions.extend([Compare(1), JumpZ(body_label.name), Jump(end_label.name)])
         elif isinstance(statement.condition, tuple):
             condition_instructions.extend(self.visit(statement.condition))
         else:
@@ -292,7 +296,7 @@ class CodeGenerator(NodeVisitor):
         function_name = function.name.upper()
         symbol: FunctionSymbol = self._expect_symbol_(function_name, FunctionSymbol)
 
-        instructions = self.built_in_function(function)
+        instructions = self._built_in_function_(function)
 
         if instructions:
             return instructions
@@ -363,12 +367,28 @@ class CodeGenerator(NodeVisitor):
 
         return symbol
 
-    def built_in_function(self, function) -> List[Any]:
+    def _built_in_function_(self, function) -> List[Any]:
         instructions = []
 
         if function.name.upper() == BuiltInFunctions.WRITE.value:
             self._function_parameters_(function, instructions)
-            instructions.extend([Push(len(function.args or [])), Call(BuiltInFunctions.WRITE.value)])
+
+            instructions.extend([
+                Push(len(function.args or [])),
+                Call(BuiltInFunctions.WRITE.value)
+            ])
+
+            return instructions
+
+    def _built_in_variable_(self, variable) -> List[Any]:
+        instructions = []
+
+        if variable.upper() == BuiltInVars.RANDOM.value:
+            instructions.extend([Random(), Push(9), Multiply(), Truncate()])
+
+            return instructions
+        elif variable.upper == BuiltInVars.HEADING.value:
+            instructions.extend([Load(GlobalVariables.Angle.value)])
 
             return instructions
 

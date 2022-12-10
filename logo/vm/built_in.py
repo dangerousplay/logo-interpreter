@@ -1,7 +1,19 @@
 import enum
 from typing import Any
 
-from logo.vm.isa import DefineFunction, Store, Call, Push, Load, Set, Unset, Flags, MoveTo, Read, Return
+from logo.vm.isa import DefineFunction, Store, Call, Push, Load, Set, Unset, Flags, MoveTo, Return, \
+    Subtract, Add
+
+
+class GlobalVariables(enum.Enum):
+    Angle = "angle"
+
+
+class BuiltInVars(enum.Enum):
+    HEADING = "HEADING"
+    RANDOM = "RANDOM"
+    XCOR = "XCOR"
+    YCOR = "YCOR"
 
 
 class BuiltInFunctions(enum.Enum):
@@ -24,12 +36,13 @@ class BuiltInFunctions(enum.Enum):
 
 def built_in_functions() -> tuple[dict[str, DefineFunction], dict[str, Any]]:
     var_num = "num"
+    var_angle = GlobalVariables.Angle.value
 
-    forward = DefineFunction("FORWARD", [Store(var_num), Push(0), Load(var_num), Call(BuiltInFunctions.MOVE.value), Return()])
-    backward = DefineFunction("BACKWARD", [Store(var_num), Push(180), Load(var_num), Call(BuiltInFunctions.MOVE.value), Return()])
+    forward = DefineFunction("FORWARD", [Store(var_num), Load(var_angle), Load(var_num), Call(BuiltInFunctions.MOVE.value), Return()])
+    backward = DefineFunction("BACKWARD", [Store(var_num), Push(180), Load(var_angle), Add(), Load(var_num), Call(BuiltInFunctions.MOVE.value), Return()])
 
-    right = DefineFunction("RIGHT", [Store(var_num), Push(90), Load(var_num), Call(BuiltInFunctions.MOVE.value), Return()])
-    left = DefineFunction("LEFT", [Store(var_num), Push(270), Load(var_num), Call(BuiltInFunctions.MOVE.value), Return()])
+    right = DefineFunction("RIGHT", [Store(var_num), Load(var_angle), Load(var_num), Subtract(), Store(var_angle), Return()])
+    left = DefineFunction("LEFT", [Load(var_angle), Add(), Store(var_angle), Return()])
 
     pen_up = DefineFunction("PENUP", [Unset(Flags.PEN), Return()])
     pen_down = DefineFunction("PENDOWN", [Set(Flags.PEN), Return()])
@@ -43,7 +56,8 @@ def built_in_functions() -> tuple[dict[str, DefineFunction], dict[str, Any]]:
     clear_screen = DefineFunction("CLEARSCREEN", [Call(wipe_clean.id), Call(home.id), Return()])
 
     variables = {
-        var_num: 0
+        var_num: 0,
+        var_angle: 0,
     }
 
     functions = {
