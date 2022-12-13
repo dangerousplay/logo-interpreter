@@ -2,3 +2,4 @@ ply
 ddt
 printree
 tabulate
+git+https://github.com/rafasgj/logovm.git
